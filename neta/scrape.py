@@ -1,3 +1,5 @@
+# TODO: resume scraping - possibly save chains
+
 import logging
 import os
 import sys
@@ -93,46 +95,40 @@ def store_user(conn, user):
     Store user information in DB via established connection.  Ignores
     duplicates.
     """
-    c = conn.cursor()
     try:
-        c.execute(
-            (
-                "INSERT INTO users VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                "ON CONFLICT DO NOTHING;"
-            ),
-            (
-                user["id"],
-                user["username"],
-                user["created_at"],
-                user["name"],
-                user["location"] if "location" in user else None,
-                user["description"] if "description" in user else None,
-                user["verified"],
-                user["public_metrics"]["followers_count"],
-                user["public_metrics"]["following_count"],
-                user["public_metrics"]["listed_count"],
-                user["public_metrics"]["tweet_count"],
-            ),
-        )
-        conn.commit()
+        with conn.cursor() as c:
+            c.execute(
+                (
+                    "INSERT INTO users VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                    "ON CONFLICT DO NOTHING;"
+                ),
+                (
+                    user["id"],
+                    user["username"],
+                    user["created_at"],
+                    user["name"],
+                    user["location"] if "location" in user else None,
+                    user["description"] if "description" in user else None,
+                    user["verified"],
+                    user["public_metrics"]["followers_count"],
+                    user["public_metrics"]["following_count"],
+                    user["public_metrics"]["listed_count"],
+                    user["public_metrics"]["tweet_count"],
+                ),
+            )
     except Exception as e:
         logging.exception(e)
-        conn.rollback()
-    c.close()
 
 
 def store_edge(conn, follower, followed):
-    c = conn.cursor()
     try:
-        c.execute(
-            "INSERT INTO edges VALUES (%s, %s) ON CONFLICT DO NOTHING;",
-            (follower, followed),
-        )
-        conn.commit()
+        with conn.cursor() as c:
+            c.execute(
+                "INSERT INTO edges VALUES (%s, %s) ON CONFLICT DO NOTHING;",
+                (follower, followed),
+            )
     except Exception as e:
         logging.exception(e)
-        conn.rollback()
-    c.close()
 
 
 def get_params(pagination_token=None, max_results=1000):
@@ -157,7 +153,7 @@ def url_user_lookup(users, by="id"):
     if by == "id":
         url = f"https://api.twitter.com/2/users?ids={lookup}"
     else:  # handle lookup
-        url = f"https://api.twitter.com/2/users/by?{lookup}"
+        url = f"https://api.twitter.com/2/users/by?usernames={lookup}"
     return url
 
 
@@ -187,7 +183,10 @@ def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000):
         logging.info(f"Rate-limited. Waiting {rem - t} seconds and trying again")
         time.sleep(rem - t)
         response = requests.request(
-            "GET", url, headers=HEADERS, params=get_params(next_token, max_results)
+            "GET",
+            url,
+            headers=HEADERS,
+            params=get_params(next_token, max_results),
         )
     if response.status_code != 200:
         e = Exception(
@@ -231,10 +230,12 @@ def get_follows(conn, user_id, method="following", filter_metric_above=5000):
                     store_edge(conn, user_id, user["id"])
                 elif method == "followers":
                     store_edge(conn, user["id"], user_id)
-                #
+                # Check the metric of the method, but store always followers_count
                 metric = int(user["public_metrics"][f"{method}_count"])
                 if metric <= filter_metric_above:
-                    follows.loc[int(user["id"])] = metric
+                    follows.loc[int(user["id"])] = int(
+                        user["public_metrics"]["followers_count"]
+                    )
             except Exception as e:
                 logging.exception(e)
 
@@ -255,7 +256,7 @@ def lookup_initial_ids(conn, users, id=False):
     :param id: boolean indicating whether lookup happens through handle or ID
     """
     url = url_user_lookup(users, by="id" if id else "handle")
-    response = connect_to_endpoint(url, max_results=None)
+    response = connect_to_endpoint(url, max_results=None, tpr=15 / 300)  # 300rp15m
     data = response["data"]
 
     ids = []
@@ -272,7 +273,7 @@ def main(
     method: str = "following",
     filter_metric_above=5000,
     edges_dir: Union[Path, str] = ".",
-    save_every: int = 50,
+    save_every: int = 10,
 ):
     """Scrape Twitter follows and write edge list to database.
 
@@ -299,17 +300,17 @@ def main(
     ef = edges_dir / "edges.pkl"
 
     # Remaking for now
-    # if ef.is_file():
-    #     edges = pd.read_pickle(ef)
-    # else:
-    #     edges = pd.Series(dtype=int)
+    if ef.is_file():
+        edges = pd.read_pickle(ef)
+    else:
+        edges = pd.Series(dtype=int)
 
     edges = pd.Series(dtype=int)
     conn = connect_create()
     logging.info("Connected to database.")
 
     # Check whether the initial users are ids or handles
-    if pd.Series(users, dtype=str).str.isnumeric.all():
+    if pd.Series(users, dtype=str).str.isnumeric().all():
         id = True
     else:
         id = False
@@ -335,28 +336,42 @@ def main(
             continue
 
         logging.info(f"Scraping follows of user {user_id} (parent {parent_id}).")
-        follows = get_follows(conn, user_id, method)
-        edges = edges.append(
-            pd.Series(follows, index=[user_id] * len(follows), dtype=int)
-        )
+        try:
+            follows = get_follows(conn, user_id, method)
+            edges = edges.append(
+                pd.Series(follows, index=[user_id] * len(follows), dtype=int)
+            )
+            # Until the desired max degree is reached, add to the follow chain the n
+            # most followed connections to continue scraping
+            if (len(follow_chain) - 1) < n_degrees:
+                for follow_id in follows[:topn]:
+                    q.put(follow_chain + [follow_id])
+            else:
+                # Since we are doing breadth-first search, this will ensure we terminate
+                # at the end, without cutting short another path of execution
+                q.put([-1])
+        except Exception as e:
+            logging.error(f"ID {user_id} failed (could be e.g. private or suspended)")
+            logging.exception(e)
 
         if i % save_every == 0:
             edges.to_pickle(ef)
-        # Until the desired max degree is reached, add to the follow chain the n most
-        # followed connections to continue scraping
-        if (len(follow_chain) - 1) < n_degrees:
-            for follow_id in follows[:topn]:
-                q.put(follow_chain + [follow_id])
-        else:
-            # Since we are doing essentially breadth-first search, this will ensure we
-            # terminate at the end, without cutting short another path of execution
-            q.put([-1])
+            # Dump queue for easy resumption of scraper, then add back in
+            qc = []
+            while not q.empty():
+                qc.append(q.get())
+            pd.Series([x[-1] for x in qc]).to_pickle(edges_dir / "queue.pkl")
+            for x in qc:
+                q.put(x)
+        i += 1
+
+    conn.close()
 
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Scrape twitter follows into network graph.")
     parser.add_argument(
-        "ids",
+        "users",
         default=["givingwhatwecan"],
         type=int,
         nargs="*",
