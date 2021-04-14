@@ -245,6 +245,7 @@ def get_follows(conn, user_id, method="following", filter_metric_above=5000):
         else:
             has_data = False
 
+    conn.commit()
     return follows.sort_values(ascending=False).index.to_list()
 
 
@@ -263,6 +264,8 @@ def lookup_initial_ids(conn, users, id=False):
     for user in data:
         store_user(conn, user)
         ids.append(user["id"])
+
+    conn.commit()
     return ids
 
 
@@ -373,7 +376,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "users",
         default=["givingwhatwecan"],
-        type=int,
+        type=str,
         nargs="*",
         help="Twitter handles or IDs (don't mix!) to start building the graph from, "
         "need to be less than 100. (Default: ['givingwhatwecan'])",
