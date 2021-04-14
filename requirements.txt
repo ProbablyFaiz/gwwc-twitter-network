@@ -3,4 +3,5 @@ numpy
 networkx
 psycopg2
 ipykernel
+requests
 python-dotenv
