@@ -29,7 +29,7 @@ usage: scrape.py [-h] [-n TOPN] [-d N_DEGREES] [-m METHOD] [-f FILTER_METRIC_ABO
 Scrape twitter follows into network graph.
 
 positional arguments:
-  ids                   Twitter handles or IDs (don't mix!) to start building the graph
+  users                 Twitter handles or IDs (don't mix!) to start building the graph
                         from, need to be less than 100. (Default: ['givingwhatwecan'])
 
 optional arguments:

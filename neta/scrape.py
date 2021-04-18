@@ -170,9 +170,9 @@ def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000):
     global last_request
     # Hack to spread out requests over the window - always request every TPR seconds
     t = time.time()
-    if t - last_request < tpr:
-        print(tpr - (t - last_request))
-        time.sleep(tpr - (t - last_request))
+    time_to_wait = tpr - (t - last_request)
+    if time_to_wait > 0:
+        time.sleep(time_to_wait)
     last_request = time.time()
 
     response = requests.request(
@@ -194,7 +194,7 @@ def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000):
         )
         logging.exception(e)
         return -1
-    logging.info(f"Request {url}: {response.status_code}")
+    logging.info(f"Request {url}: {response.status_code} (waited {time_to_wait}s)")
     return response.json()
 
 
