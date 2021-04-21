@@ -239,13 +239,13 @@ def get_follows(conn, user_id, method="following", filter_metric_above=5000):
             except Exception as e:
                 logging.exception(e)
 
+        conn.commit()
         # Pagination - if >1000 results exist we'll have to make multiple requests
         if "next_token" in response["meta"]:
             response = connect_to_endpoint(url, response["meta"]["next_token"])
         else:
             has_data = False
 
-    conn.commit()
     return follows.sort_values(ascending=False).index.to_list()
 
 
