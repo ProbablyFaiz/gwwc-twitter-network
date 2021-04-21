@@ -217,8 +217,8 @@ def get_follows(conn, user_id, method="following", filter_metric_above=5000):
 
     # Series of connections to sort by their metric (the top of which will be chosen to
     # explore further)
-    follows = pd.Series(dtype=int)
-
+    ids = []
+    followers = []
     while has_data:
         data = response["data"]
         for user in data:
@@ -233,12 +233,10 @@ def get_follows(conn, user_id, method="following", filter_metric_above=5000):
                 # Check the metric of the method, but store always followers_count
                 metric = int(user["public_metrics"][f"{method}_count"])
                 if metric <= filter_metric_above:
-                    follows.loc[int(user["id"])] = int(
-                        user["public_metrics"]["followers_count"]
-                    )
+                    ids.append(int(user["id"]))
+                    followers.append(int(user["public_metrics"]["followers_count"]))
             except Exception as e:
                 logging.exception(e)
-
         conn.commit()
         # Pagination - if >1000 results exist we'll have to make multiple requests
         if "next_token" in response["meta"]:
@@ -246,6 +244,7 @@ def get_follows(conn, user_id, method="following", filter_metric_above=5000):
         else:
             has_data = False
 
+    follows = pd.Series(followers, index=ids)
     return follows.sort_values(ascending=False).index.to_list()
 
 
