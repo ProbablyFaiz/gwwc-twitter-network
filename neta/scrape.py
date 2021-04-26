@@ -106,9 +106,11 @@ def store_user(conn, user):
                     user["id"],
                     user["username"],
                     user["created_at"],
-                    user["name"],
-                    user["location"] if "location" in user else None,
-                    user["description"] if "description" in user else None,
+                    user["name"].replace("\0", ""),
+                    user["location"].replace("\0", "") if "location" in user else None,
+                    user["description"].replace("\0", "")
+                    if "description" in user
+                    else None,
                     user["verified"],
                     user["public_metrics"]["followers_count"],
                     user["public_metrics"]["following_count"],
@@ -301,7 +303,6 @@ def main(
     )
     ef = edges_dir / "edges.pkl"
 
-    # Remaking for now
     if ef.is_file():
         edges = pd.read_pickle(ef)
     else:
@@ -329,9 +330,10 @@ def main(
         user_id = follow_chain[-1]
         parent_id = follow_chain[-2]
 
-        # Check if user is in index or values of edges depending on method
-        test = edges if (method == "following") else edges.values
-        if user_id in test:
+        # Check if user is in (index of) edges: for both followers & following it means
+        # they've been scraped already. Note the DB always stores follower/following
+        # pairs, hence edges Series and edges DB table are inverted for followers
+        if user_id in edges:
             logging.info(
                 f"Skipping user {user_id} (parent {parent_id}) [already in edges]"
             )
@@ -345,7 +347,7 @@ def main(
             )
             # Until the desired max degree is reached, add to the follow chain the n
             # most followed connections to continue scraping
-            if (len(follow_chain) - 1) < n_degrees:
+            if not q.empty() and ((len(follow_chain) - 1) < n_degrees):
                 for follow_id in follows[:topn]:
                     q.put(follow_chain + [follow_id])
             else:
