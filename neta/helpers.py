@@ -50,12 +50,13 @@ class UserHelper:
         output = ""
         for user_id, value in user_value_dict.items():
             user = self.get_user(user_id)
-            output += f"{user['username']}: {value}\n"
+            output += f"{user['username']} ({user['id']}): {value}\n"
         return output
 
 
 def top_n(value_dict: dict, n: int) -> Dict[str, float]:
-    """Helper function to find the n highest-value keys in a dictionary. Runs in O("""
+    """Helper function to find the n highest-value keys in a dictionary.
+    Runs in O(n+k) time for a dictionary with k entries."""
     # Have to reformat the dict like this for heapq to cooperate.
     collection = [(value, key) for key, value in value_dict.items()]
     heapq.heapify(collection)
