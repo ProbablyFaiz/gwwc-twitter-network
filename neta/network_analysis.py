@@ -1,6 +1,6 @@
 import networkx as nx
 import csv
-from helpers import top_n
+from helpers import top_n, UserHelper
 
 EDGES_FILE_PATH = "../data/edges.csv"
 
@@ -46,9 +46,10 @@ def gwwc_alignment_fast(gwwc_followed_set):
 
 
 if __name__ == "__main__":
+    user_helper = UserHelper()
     network = construct_graph()
     gwwc_out_neighbors = get_gwwc_combined_out_neighbors()
     most_central = top_n(centrality(), 20)
-    print(most_central)
+    print(user_helper.get_usernames(most_central))
     most_aligned = top_n(gwwc_alignment_fast(gwwc_out_neighbors), 50)
-    print(most_aligned)
+    print(user_helper.get_usernames(most_aligned))
