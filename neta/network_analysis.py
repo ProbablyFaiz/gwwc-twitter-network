@@ -37,7 +37,7 @@ def jaccard_index(n1_neighbors: Set[str], n2_neighbors: Set[str]) -> float:
     return len(n1_neighbors & n2_neighbors) / len(n1_neighbors | n2_neighbors)
 
 
-def filter_nodes(nonzero_out_neighbors=False, exclude_gwwc_accounts=False) -> Set[str]:
+def get_nodes(nonzero_out_neighbors=False, exclude_gwwc_accounts=False) -> Set[str]:
     """Returns a filtered set of nodes based on provided arguments.
     :param nonzero_out_neighbors: Excludes nodes with 0 out neighbors.
     :param exclude_gwwc_accounts: Excludes nodes included in GWWC_NODES list.
@@ -53,7 +53,7 @@ def filter_nodes(nonzero_out_neighbors=False, exclude_gwwc_accounts=False) -> Se
 def gwwc_alignment_fast(gwwc_followed_set: Set[str]) -> Dict[str, float]:
     """Jaccard similarity between union of GWWC nodes' follows and the given node's follows"""
     alignment_values = {}
-    for node in filter_nodes(nonzero_out_neighbors=True, exclude_gwwc_accounts=True):
+    for node in get_nodes(nonzero_out_neighbors=True, exclude_gwwc_accounts=True):
         node_out_edges = out_neighbors(node)
         alignment_values[node] = jaccard_index(node_out_edges, gwwc_followed_set)
     return alignment_values
@@ -62,7 +62,7 @@ def gwwc_alignment_fast(gwwc_followed_set: Set[str]) -> Dict[str, float]:
 def gwwc_alignment_disaggregated(gwwc_followed_sets: List[Set[str]]) -> Dict[str, float]:
     """Average of Jaccard similarity for each GWWC account's follows and the given node's follows"""
     alignment_values = {}
-    for node in filter_nodes(nonzero_out_neighbors=True, exclude_gwwc_accounts=True):
+    for node in get_nodes(nonzero_out_neighbors=True, exclude_gwwc_accounts=True):
         node_out_edges = out_neighbors(node)
         alignment_values[node] = \
             sum(jaccard_index(node_out_edges, followed_set) for followed_set in gwwc_followed_sets) \
