@@ -1,7 +1,6 @@
 import networkx as nx
 import csv
-import heapq
-from collections import OrderedDict
+from helpers import top_n
 
 EDGES_FILE_PATH = "../data/edges.csv"
 
@@ -18,17 +17,6 @@ def construct_graph():
         edges = [(row[0], row[1]) for row in cf]
         new_network.add_edges_from(edges)
     return new_network
-
-
-def top_n(value_dict: dict, n: int):
-    """Helper function to find the n highest-value keys in a dictionary. Runs in O("""
-    # Have to reformat the dict like this for heapq to cooperate.
-    collection = [(value, key) for key, value in value_dict.items()]
-    heapq.heapify(collection)
-    top_n_items = OrderedDict()
-    for nth_largest in heapq.nlargest(n, collection):
-        top_n_items[nth_largest[1]] = nth_largest[0]  # Reconstruct the dict
-    return top_n_items
 
 
 def centrality():
