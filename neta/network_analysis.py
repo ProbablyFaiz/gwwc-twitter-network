@@ -1,4 +1,4 @@
-from typing import Dict, List, Set
+from typing import Dict, Set
 import networkx as nx
 import csv
 from helpers import top_n, UserHelper
@@ -28,9 +28,17 @@ def out_neighbors(node: str) -> Set[str]:
     return {edge[1] for edge in network.out_edges(node)}
 
 
-def get_gwwc_combined_out_neighbors() -> (Set[str], List[Set[str]]):
+def get_gwwc_out_neighbors(aggregated=False):
+    """
+    When aggregated=False, a list of sets containing each GWWC node's out neighbors is returned. When aggregated=True,
+    those sets are unioned and returned as a single set.
+    :param aggregated: Determines whether the function returns a list of Set[str] or a single, aggregated Set[str]
+    :return: Either a disaggregated List[Set[str]] or an aggregated Set[str].
+    """
     gwwc_followed_sets = [out_neighbors(node) for node in GWWC_NODES]
-    return set().union(*gwwc_followed_sets), gwwc_followed_sets
+    if aggregated:
+        return set().union(*gwwc_followed_sets)
+    return gwwc_followed_sets
 
 
 def jaccard_index(n1_neighbors: Set[str], n2_neighbors: Set[str]) -> float:
@@ -50,8 +58,9 @@ def get_nodes(nonzero_out_neighbors=False, exclude_gwwc_accounts=False) -> Set[s
     return filtered_nodes
 
 
-def gwwc_alignment_fast(gwwc_followed_set: Set[str]) -> Dict[str, float]:
+def gwwc_alignment_fast() -> Dict[str, float]:
     """Jaccard similarity between union of GWWC nodes' follows and the given node's follows"""
+    gwwc_followed_set = get_gwwc_out_neighbors(aggregated=True)
     alignment_values = {}
     for node in get_nodes(nonzero_out_neighbors=True, exclude_gwwc_accounts=True):
         node_out_edges = out_neighbors(node)
@@ -59,8 +68,9 @@ def gwwc_alignment_fast(gwwc_followed_set: Set[str]) -> Dict[str, float]:
     return alignment_values
 
 
-def gwwc_alignment_disaggregated(gwwc_followed_sets: List[Set[str]]) -> Dict[str, float]:
+def gwwc_alignment_disaggregated() -> Dict[str, float]:
     """Average of Jaccard similarity for each GWWC account's follows and the given node's follows"""
+    gwwc_followed_sets = get_gwwc_out_neighbors(aggregated=False)
     alignment_values = {}
     for node in get_nodes(nonzero_out_neighbors=True, exclude_gwwc_accounts=True):
         node_out_edges = out_neighbors(node)
@@ -73,9 +83,9 @@ def gwwc_alignment_disaggregated(gwwc_followed_sets: List[Set[str]]) -> Dict[str
 if __name__ == "__main__":
     user_helper = UserHelper()
     network = construct_graph()
-    gwwc_out_neighbors, gwwc_followed_sets = get_gwwc_combined_out_neighbors()
-    # most_central = top_n(centrality(), 25)
-    # print("Most Central Users\n", user_helper.pretty_print_users(most_central))
-    most_aligned = top_n(gwwc_alignment_disaggregated(gwwc_followed_sets), 25)
+    most_central = top_n(centrality(), 25)
+    print("Most Central Users")
+    print(user_helper.pretty_print_users(most_central))
+    most_aligned = top_n(gwwc_alignment_disaggregated(), 25)
     print("Most GWWC-Aligned Users")
     print(user_helper.pretty_print_users(most_aligned))
