@@ -29,27 +29,44 @@ def out_neighbors(node):
 
 def get_gwwc_combined_out_neighbors():
     gwwc_followed_sets = [out_neighbors(node) for node in GWWC_NODES]
-    return set().union(*gwwc_followed_sets)
+    return set().union(*gwwc_followed_sets), gwwc_followed_sets
 
 
 def jaccard_index(n1_neighbors, n2_neighbors):
     return len(n1_neighbors & n2_neighbors) / len(n1_neighbors | n2_neighbors)
 
 
+def nodes_with_out_neighbors() -> set:
+    """Returns the set of nodes in the network with at least one out-neighbor"""
+    return set(edge[0] for edge in network.edges)
+
+
 def gwwc_alignment_fast(gwwc_followed_set):
     """Jaccard similarity between union of GWWC nodes' follows and the given node's follows"""
     alignment_values = {}
-    for node in network.nodes:
+    for node in nodes_with_out_neighbors():
         node_out_edges = out_neighbors(node)
         alignment_values[node] = jaccard_index(node_out_edges, gwwc_followed_set)
+    return alignment_values
+
+
+def gwwc_alignment_disaggregated(gwwc_followed_sets):
+    """Average of Jaccard similarity for each GWWC account's follows and the given node's follows"""
+    alignment_values = {}
+    for node in nodes_with_out_neighbors():
+        node_out_edges = out_neighbors(node)
+        alignment_values[node] = \
+            sum(jaccard_index(node_out_edges, followed_set) for followed_set in gwwc_followed_sets) \
+            / len(gwwc_followed_sets)
     return alignment_values
 
 
 if __name__ == "__main__":
     user_helper = UserHelper()
     network = construct_graph()
-    gwwc_out_neighbors = get_gwwc_combined_out_neighbors()
-    most_central = top_n(centrality(), 20)
-    print(user_helper.get_usernames(most_central))
-    most_aligned = top_n(gwwc_alignment_fast(gwwc_out_neighbors), 50)
-    print(user_helper.get_usernames(most_aligned))
+    gwwc_out_neighbors, gwwc_followed_sets = get_gwwc_combined_out_neighbors()
+    # most_central = top_n(centrality(), 25)
+    # print("Most Central Users\n", user_helper.pretty_print_users(most_central))
+    most_aligned = top_n(gwwc_alignment_disaggregated(gwwc_followed_sets), 25)
+    print("Most GWWC-Aligned Users")
+    print(user_helper.pretty_print_users(most_aligned))
