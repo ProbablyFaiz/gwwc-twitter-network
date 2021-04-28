@@ -51,7 +51,7 @@ def gwwc_alignment_fast(gwwc_followed_set):
     alignment_values = []
     for node in network.nodes:
         node_out_edges = out_neighbors(node)
-        alignment_values.append((jaccard_index(node_out_edges, gwwc_followed_set), node))
+        alignment_values.append((-jaccard_index(node_out_edges, gwwc_followed_set), node))
     return alignment_values
 
 
