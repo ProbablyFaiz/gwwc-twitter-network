@@ -1,6 +1,6 @@
 import heapq
 from collections import OrderedDict
-from typing import TypedDict, Dict, Iterable
+from typing import TypedDict, Dict, Iterable, List
 import csv
 
 USERS_FILE_PATH = "../data/users.csv"
@@ -34,7 +34,7 @@ class UserHelper:
             } for row in cf}
         pass
 
-    def get_usernames(self, user_ids: Iterable[str]):
+    def get_usernames(self, user_ids: Iterable[str]) -> List[str]:
         usernames = []
         for user_id in user_ids:
             if user_id in self.users:
@@ -45,6 +45,13 @@ class UserHelper:
 
     def get_user(self, user_id: str) -> User:
         return self.users.get(user_id)
+
+    def pretty_print_users(self, user_value_dict: Dict[str, float]) -> str:
+        output = ""
+        for user_id, value in user_value_dict.items():
+            user = self.get_user(user_id)
+            output += f"{user['username']}: {value}\n"
+        return output
 
 
 def top_n(value_dict: dict, n: int) -> Dict[str, float]:
