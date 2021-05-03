@@ -308,7 +308,7 @@ def main(
     else:
         edges = pd.Series(dtype=int)
 
-    edges = pd.Series(dtype=int)
+    # edges = pd.Series(dtype=int)
     conn = connect_create()
     logging.info("Connected to database.")
 
