@@ -1,9 +1,14 @@
 import heapq
+import os
 from collections import OrderedDict
 from typing import TypedDict, Dict, Iterable, List
 import csv
 
-USERS_FILE_PATH = "../data/users.csv"
+
+
+
+def get_full_path(relative_project_path):
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), relative_project_path)
 
 
 class User(TypedDict):
@@ -21,6 +26,7 @@ class UserHelper:
     users: Dict[str, User]
 
     def __init__(self):
+        from constants import USERS_FILE_PATH
         with open(USERS_FILE_PATH, 'r') as f:
             cf = csv.reader(f)
             next(cf)

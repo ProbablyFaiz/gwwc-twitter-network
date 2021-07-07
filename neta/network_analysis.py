@@ -1,9 +1,10 @@
 from typing import Dict, Set
 import networkx as nx
 import csv
+
+from constants import EDGE_CSV_PATH
 from helpers import top_n, UserHelper
 
-EDGES_FILE_PATH = "../data/edges.csv"
 
 GWWC_NODES = {"88534421", "363005534", "1062005076204642305", "116994659", "107336879", "30436279", "519438862",
               "1183382935", "222210727", "1183382935", "47268595", "37723353", "1110877798820777986", "181328570"}
@@ -12,7 +13,7 @@ network: nx.DiGraph
 
 def construct_graph() -> nx.DiGraph:
     new_network = nx.DiGraph()
-    with open(EDGES_FILE_PATH, 'r') as f:
+    with open(EDGE_CSV_PATH, 'r') as f:
         cf = csv.reader(f)
         next(cf)
         edges = [(row[0], row[1]) for row in cf]
@@ -83,9 +84,9 @@ def gwwc_alignment_disaggregated() -> Dict[str, float]:
 if __name__ == "__main__":
     user_helper = UserHelper()
     network = construct_graph()
-    most_central = top_n(centrality(), 25)
-    print("Most Central Users")
-    print(user_helper.pretty_print_users(most_central))
+    # most_central = top_n(centrality(), 25)
+    # print("Most Central Users")
+    # print(user_helper.pretty_print_users(most_central))
     most_aligned = top_n(gwwc_alignment_disaggregated(), 25)
     print("Most GWWC-Aligned Users")
     print(user_helper.pretty_print_users(most_aligned))
