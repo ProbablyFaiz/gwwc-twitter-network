@@ -27,7 +27,7 @@ def centrality() -> Dict[str, float]:
 
 
 def out_neighbors(node: str) -> Set[str]:
-    return {edge[1] for edge in network.out_edges(node)}
+    return {edge[1] for edge in network.edges(node)}
 
 
 def get_gwwc_out_neighbors(aggregated=False):
@@ -60,6 +60,18 @@ def get_nodes(nonzero_out_neighbors=False, exclude_gwwc_accounts=False) -> Set[s
     return filtered_nodes
 
 
+def node_alignment(node_id: str) -> Dict[str, float]:
+    alignment_values = {}
+    given_node_neighbors = out_neighbors(node_id)
+    for other_node in get_nodes(nonzero_out_neighbors=True):
+        if other_node != node_id:
+            try:
+                alignment_values[other_node] = jaccard_index(out_neighbors(other_node), given_node_neighbors)
+            except:
+                print("failure")
+    return alignment_values
+
+
 def gwwc_alignment_fast() -> Dict[str, float]:
     """Jaccard similarity between union of GWWC nodes' follows and the given node's follows"""
     gwwc_followed_set = get_gwwc_out_neighbors(aggregated=True)
@@ -82,6 +94,21 @@ def gwwc_alignment_disaggregated() -> Dict[str, float]:
     return alignment_values
 
 
+def normalize_dict(value_dict: Dict[str, float]) -> Dict[str, float]:
+    factor = 1.0 / sum(value_dict.values())
+    return {key: val * factor for key, val in value_dict.items()}
+
+
+def connector_nodes(other_node) -> Dict[str, float]:
+    gwwc_alignments = normalize_dict(gwwc_alignment_fast())
+    other_node_alignments = normalize_dict(node_alignment(other_node))
+    overlapping_keys = set(gwwc_alignments.keys()) & set(other_node_alignments.keys())
+    alignment_sums = {}
+    for key in overlapping_keys:
+        alignment_sums[key] = gwwc_alignments[key] + other_node_alignments[key]
+    return alignment_sums
+
+
 if __name__ == "__main__":
     user_helper = UserHelper()
     network_container = NetworkContainer.get_citation_network()
@@ -90,6 +117,10 @@ if __name__ == "__main__":
     # most_central = top_n(centrality(), 25)
     # print("Most Central Users")
     # print(user_helper.pretty_print_users(most_central))
-    most_aligned = recommendation_engine.recommendations(GWWC_NODES, 25)
-    print("Most GWWC-Aligned Users")
-    print(user_helper.pretty_print_users(most_aligned))
+    # most_aligned = recommendation_engine.recommendations(GWWC_NODES, 25)
+    # most_aligned = top_n(gwwc_alignment_fast(), 25)
+    # print("Most GWWC-Aligned Users")
+    # print(user_helper.pretty_print_users(most_aligned))
+    comparison_acct = "14717311"  # @elonmusk
+    conn_nodes = top_n(connector_nodes(comparison_acct), 25)
+    print(user_helper.pretty_print_users(conn_nodes))
