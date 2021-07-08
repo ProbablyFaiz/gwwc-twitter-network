@@ -7,7 +7,7 @@ from constants import NETWORK_CACHE_PATH, EDGE_CSV_PATH
 from graph.network_edge_list import NetworkEdgeList
 
 
-class CitationNetwork:
+class NetworkContainer:
     network: nx.Graph
     network_edge_list: NetworkEdgeList
 
@@ -19,16 +19,17 @@ class CitationNetwork:
     def get_citation_network(enable_caching=True):
         cache_file_path = NETWORK_CACHE_PATH
         if not enable_caching:
-            return CitationNetwork()
+            return NetworkContainer()
         if os.path.exists(cache_file_path):
             try:
                 with open(cache_file_path, 'rb') as cache_file:
+                    print("Working cache")
                     return pickle.load(cache_file)
             except BaseException as err:
                 print("Loading citation network from cache file failed with error:", err)
-                return CitationNetwork()  # Create a new network if fetching from cache fails
+                return NetworkContainer()  # Create a new network if fetching from cache fails
         else:  # Otherwise, construct a new network and cache it.
-            new_network = CitationNetwork()
+            new_network = NetworkContainer()
             try:
                 with open(cache_file_path, 'wb') as cache_file:
                     pickle.dump(new_network, cache_file)

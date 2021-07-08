@@ -1,2 +1,2 @@
-from .citation_network import CitationNetwork
+from .network_container import NetworkContainer
 from .network_edge_list import NetworkEdgeList

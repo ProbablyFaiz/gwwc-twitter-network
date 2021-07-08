@@ -1,6 +1,7 @@
 import heapq
 import os
 from collections import OrderedDict
+from math import inf
 from typing import TypedDict, Dict, Iterable, List
 import csv
 
@@ -55,14 +56,20 @@ class UserHelper:
     def pretty_print_users(self, user_value_dict: Dict[str, float]) -> str:
         output = ""
         for user_id, value in user_value_dict.items():
-            user = self.get_user(user_id)
-            output += f"{user['username']} ({user['id']}): {value}\n"
+            user = self.get_user(str(user_id))
+            if user:
+                output += f"{user['username']} ({user['id']}): {value}\n"
+            else:
+                output += f"{user_id} (Info not found): {value}\n"
         return output
 
 
 def top_n(value_dict: dict, n: int) -> Dict[str, float]:
+
     """Helper function to find the n highest-value keys in a dictionary.
     Runs in O(n+k) time for a dictionary with k entries."""
+    if n is None or n == inf:
+        return value_dict
     # Have to reformat the dict like this for heapq to cooperate.
     collection = [(value, key) for key, value in value_dict.items()]
     heapq.heapify(collection)

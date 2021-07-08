@@ -1,21 +1,18 @@
 from typing import Dict
 from math import sqrt, log
-from graph import CitationNetwork
+from graph import NetworkContainer
 from neta.random_walker import RandomWalker
 from helpers import top_n
 
 MAX_NUM_STEPS = 200000
 MAX_WALK_LENGTH = 5
 
-VISITED_FREQ_THRESHOLD = 100
-NUM_VISITED_THRESHOLD = 25
-
 
 class Recommendation:
-    citation_network: CitationNetwork
+    citation_network: NetworkContainer
     random_walker: RandomWalker
 
-    def __init__(self, citation_network: CitationNetwork):
+    def __init__(self, citation_network: NetworkContainer):
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 

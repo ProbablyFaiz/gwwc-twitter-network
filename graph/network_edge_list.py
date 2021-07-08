@@ -29,12 +29,12 @@ class NetworkEdgeList:
                 neighbor_dict[row[1]].append(row[0])
                 edge_list_size += 2
 
-        self.edge_list = np.empty(edge_list_size, dtype='int32')
+        self.edge_list = np.empty(edge_list_size, dtype='int64')
         self.node_metadata = {}
 
         prev_index = 0
         for node, neighbors in neighbor_dict.items():
-            np_neighbors = np.array(neighbors, dtype='int32')
+            np_neighbors = np.array(neighbors, dtype='int64')
             start_idx = prev_index
             end_idx = start_idx + len(neighbors)
             self.node_metadata[node] = NodeMetadata(start=start_idx, end=end_idx,

@@ -1,9 +1,9 @@
 from random import randrange
-from graph import CitationNetwork
+from graph import NetworkContainer
 
 
 class RandomWalker:
-    citation_network: CitationNetwork
+    citation_network: NetworkContainer
 
     def __init__(self, citation_network):
         self.citation_network = citation_network
@@ -23,7 +23,7 @@ class RandomWalker:
         return curr_node, walk_length
 
     def random_neighbor_fast(self, source_node):
-        node_info = self.citation_network.network_edge_list.node_metadata[source_node]
+        node_info = self.citation_network.network_edge_list.node_metadata[str(source_node)]
         if node_info.start == node_info.end:
             return source_node
         return self.citation_network.network_edge_list.edge_list[randrange(node_info.start, node_info.end)]
