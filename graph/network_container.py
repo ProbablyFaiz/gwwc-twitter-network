@@ -1,9 +1,10 @@
 import csv
-import pickle
 import os
-import networkx as nx
+import pickle
 
-from constants import NETWORK_CACHE_PATH, EDGE_CSV_PATH
+import networkx as nx
+from constants import EDGE_CSV_PATH, NETWORK_CACHE_PATH
+
 from graph.network_edge_list import NetworkEdgeList
 
 
@@ -22,28 +23,32 @@ class NetworkContainer:
             return NetworkContainer()
         if os.path.exists(cache_file_path):
             try:
-                with open(cache_file_path, 'rb') as cache_file:
+                with open(cache_file_path, "rb") as cache_file:
                     print("Working cache")
                     return pickle.load(cache_file)
             except BaseException as err:
-                print("Loading citation network from cache file failed with error:", err)
-                return NetworkContainer()  # Create a new network if fetching from cache fails
+                print(
+                    "Loading citation network from cache file failed with error:", err
+                )
+                return (
+                    NetworkContainer()
+                )  # Create a new network if fetching from cache fails
         else:  # Otherwise, construct a new network and cache it.
             new_network = NetworkContainer()
             try:
-                with open(cache_file_path, 'wb') as cache_file:
+                with open(cache_file_path, "wb") as cache_file:
                     pickle.dump(new_network, cache_file)
             except BaseException as err:
                 print("Saving citation network to cache file failed with error:", err)
             return new_network
 
     @staticmethod
-    def construct_network(directed=False):
+    def construct_network(directed=True):
         if directed:
             citation_network = nx.DiGraph()
         else:
             citation_network = nx.Graph()
-        with open(EDGE_CSV_PATH, 'r') as cf:
+        with open(EDGE_CSV_PATH, "r") as cf:
             csv_reader = csv.reader(cf)
             next(csv_reader)
             citations = list(csv_reader)

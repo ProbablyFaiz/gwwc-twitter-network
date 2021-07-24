@@ -271,7 +271,7 @@ def lookup_initial_ids(conn, users, id=False):
 
 
 def main(
-    users: List[int],
+    users: List[str],
     topn: int = 15,
     n_degrees: int = 6,
     method: str = "following",

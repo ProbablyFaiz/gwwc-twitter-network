@@ -4,3 +4,4 @@ networkx
 psycopg2
 requests
 python-dotenv
+typer
