@@ -11,5 +11,5 @@ setup(
     long_description=readme,
     url="https://github.com/ProbablyFaiz/gwwc-twitter-network",
     license=None,
-    packages=find_packages(),
+    packages=["neta"],
 )
