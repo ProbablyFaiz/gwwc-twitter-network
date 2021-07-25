@@ -12,10 +12,16 @@ class UserHelper:
 
     users: pd.DataFrame
 
-    def __init__(self):
+    def __init__(self, users=None):
+        """Initialize user helper.
+
+        :param users: (optional) dataframe containing user data
+        """
         from constants import USERS_FILE_PATH
 
-        self.users = pd.read_csv(USERS_FILE_PATH).set_index("id")
+        if users is not None:
+            users = pd.read_csv(USERS_FILE_PATH)
+        self.users = users.set_index("id")
 
     def get_usernames(self, user_ids: Iterable[int]):
         return self.users.reindex(user_ids)["username"].to_list()

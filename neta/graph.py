@@ -25,8 +25,7 @@ class NetworkEdgeList:
     edge_list: np.array
     node_metadata: Dict[int, NodeMetadata]
 
-    def __init__(self, directed=True, version="following"):
-        edges = pd.read_csv(EDGE_CSV_PATH)
+    def __init__(self, edges, directed=True, version="following"):
         source = "follower" if version == "following" else "followed"
         target = "followed" if version == "following" else "follower"
         neighbor_dict = (
@@ -36,7 +35,7 @@ class NetworkEdgeList:
         )
         n = len(edges)
         if not directed:
-            edges.apply(lambda x: neighbor_dict[x[target]].append(x[source]))
+            edges.apply(lambda x: neighbor_dict[x[target]].append(x[source]), axis=1)
             n *= 2
 
         self.edge_list = np.empty(n, dtype="int64")
@@ -58,15 +57,20 @@ class NetworkContainer:
     network: nx.Graph
     network_edge_list: NetworkEdgeList
 
-    def __init__(self, directed=False, version="following"):
-        self.network = self.construct_network(directed, version)
-        self.network_edge_list = NetworkEdgeList(directed, version)
+    def __init__(self, directed=False, version="following", edges=None):
+        if edges is None:
+            edges = pd.read_csv(EDGE_CSV_PATH)
+        self.network = self.construct_network(edges, directed, version)
+        self.network_edge_list = NetworkEdgeList(edges, directed, version)
 
     @staticmethod
-    def get_citation_network(enable_caching=True):
+    def get_citation_network(
+        enable_caching=True, directed=True, version="following", edges=None
+    ):
         cache_file_path = NETWORK_CACHE_PATH
+
         if not enable_caching:
-            return NetworkContainer()
+            return NetworkContainer(directed, version, edges)
         if os.path.exists(cache_file_path):
             try:
                 with open(cache_file_path, "rb") as cache_file:
@@ -76,11 +80,11 @@ class NetworkContainer:
                 print(
                     "Loading citation network from cache file failed with error:", err
                 )
-                return (
-                    NetworkContainer()
+                return NetworkContainer(
+                    directed, version, edges
                 )  # Create a new network if fetching from cache fails
         else:  # Otherwise, construct a new network and cache it.
-            new_network = NetworkContainer()
+            new_network = NetworkContainer(directed, version, edges)
             try:
                 with open(cache_file_path, "wb") as cache_file:
                     pickle.dump(new_network, cache_file)
@@ -89,9 +93,9 @@ class NetworkContainer:
             return new_network
 
     @staticmethod
-    def construct_network(directed=True, version="following"):
+    def construct_network(edges, directed=True, version="following"):
         return nx.from_pandas_edgelist(
-            pd.read_csv(EDGE_CSV_PATH),
+            edges,
             "follower" if version == "following" else "followed",
             "followed" if version == "following" else "follower",
             create_using=nx.DiGraph if directed else nx.Graph,
