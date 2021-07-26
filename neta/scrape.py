@@ -159,7 +159,7 @@ def url_user_lookup(users, by="id"):
     return url
 
 
-def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000):
+def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000, wait=True):
     """Connect to twitter API and return JSON response.  Spreads
 
     :param url: API URL
@@ -173,8 +173,10 @@ def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000):
     # Hack to spread out requests over the window - always request every TPR seconds
     t = time.time()
     time_to_wait = tpr - (t - last_request)
-    if time_to_wait > 0:
+    if wait and (time_to_wait > 0):
         time.sleep(time_to_wait)
+    else:
+        time_to_wait = 0
     last_request = time.time()
 
     response = requests.request(

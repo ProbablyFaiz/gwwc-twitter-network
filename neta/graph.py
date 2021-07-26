@@ -64,8 +64,11 @@ class NetworkContainer:
         self.network_edge_list = NetworkEdgeList(edges, directed, version)
 
     @staticmethod
-    def get_citation_network(
-        enable_caching=True, directed=True, version="following", edges=None
+    def get_network(
+        enable_caching=True,
+        directed=True,
+        version="following",
+        edges=None,
     ):
         cache_file_path = NETWORK_CACHE_PATH
 
@@ -74,12 +77,19 @@ class NetworkContainer:
         if os.path.exists(cache_file_path):
             try:
                 with open(cache_file_path, "rb") as cache_file:
-                    print("Working cache")
-                    return pickle.load(cache_file)
+                    print("Loading network from cache.")
+                    network_container = pickle.load(cache_file)
+                    if directed and not network_container.network.is_directed():
+                        network_container.network = (
+                            network_container.network.to_directed()
+                        )
+                    elif not directed and network_container.network.is_directed():
+                        network_container.network = (
+                            network_container.network.to_undirected()
+                        )
+                    return network_container
             except BaseException as err:
-                print(
-                    "Loading citation network from cache file failed with error:", err
-                )
+                print("Loading network from cache file failed with error:", err)
                 return NetworkContainer(
                     directed, version, edges
                 )  # Create a new network if fetching from cache fails
@@ -89,7 +99,7 @@ class NetworkContainer:
                 with open(cache_file_path, "wb") as cache_file:
                     pickle.dump(new_network, cache_file)
             except BaseException as err:
-                print("Saving citation network to cache file failed with error:", err)
+                print("Saving network to cache file failed with error:", err)
             return new_network
 
     @staticmethod
