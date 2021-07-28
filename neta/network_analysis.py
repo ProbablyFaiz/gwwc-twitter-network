@@ -24,17 +24,6 @@ GWWC_NODES = {
     1110877798820777986,
     181328570,
 }
-network: nx.DiGraph
-
-
-def construct_graph() -> nx.DiGraph:
-    new_network = nx.DiGraph()
-    with open(EDGE_CSV_PATH, "r") as f:
-        cf = csv.reader(f)
-        next(cf)
-        edges = [(row[0], row[1]) for row in cf]
-        new_network.add_edges_from(edges)
-    return new_network
 
 
 def centrality(network) -> Dict[int, float]:
@@ -135,16 +124,16 @@ def connector_nodes(network, other_node: int) -> Dict[int, float]:
 
 if __name__ == "__main__":
     user_helper = UserHelper()
-    network_container = NetworkContainer.get_network(directed=True)
+    network_container = NetworkContainer.get_network(directed=False)
     network = network_container.network
     recommendation_engine = Recommendation(network_container)
-    # most_central = top_n(centrality(), 25)
+    # most_central = top_n(centrality(network), 25)
     # print("Most Central Users")
     # print(user_helper.pretty_print_users(most_central))
-    # most_aligned = recommendation_engine.recommendations(GWWC_NODES, 25)
-    # most_aligned = top_n(gwwc_alignment_fast(), 25)
-    # print("Most GWWC-Aligned Users")
-    # print(user_helper.pretty_print_users(most_aligned))
-    comparison_acct = 14717311  # @elonmusk
-    conn_nodes = top_n(connector_nodes(network, comparison_acct), 25)
-    print(user_helper.pretty_print_users(conn_nodes))
+    most_aligned = recommendation_engine.recommendations(GWWC_NODES, 25)
+    # most_aligned = top_n(gwwc_alignment_fast(network), 25)
+    print("Most GWWC-Aligned Users")
+    print(user_helper.pretty_print_users(most_aligned))
+    # comparison_acct = 14717311  # @elonmusk
+    # conn_nodes = top_n(connector_nodes(network, comparison_acct), 25)
+    # print(user_helper.pretty_print_users(conn_nodes))

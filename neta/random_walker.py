@@ -24,6 +24,8 @@ class RandomWalker:
         return curr_node, walk_length
 
     def random_neighbor_fast(self, source_node):
+        if source_node not in self.citation_network.network_edge_list.node_metadata:
+            return source_node
         node_info = self.citation_network.network_edge_list.node_metadata[source_node]
         if node_info.start == node_info.end:
             return source_node

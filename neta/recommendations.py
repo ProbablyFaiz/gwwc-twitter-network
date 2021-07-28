@@ -23,7 +23,7 @@ class Recommendation:
         num_recommendations,
         max_walk_length=MAX_WALK_LENGTH,
         max_num_steps=MAX_NUM_STEPS,
-    ) -> Dict[str, float]:
+    ) -> Dict[int, float]:
         query_case_weights = self.input_node_weights(opinion_ids)
         overall_node_freq_dict = {}
         for node_id, weight in query_case_weights.items():
@@ -35,7 +35,7 @@ class Recommendation:
                 max_num_steps=curr_max_num_steps,
             )
             for node, freq in curr_freq_dict.items():
-                if str(node) in opinion_ids:
+                if node in opinion_ids:
                     continue
                 if node not in overall_node_freq_dict:
                     overall_node_freq_dict[node] = 0.0
@@ -52,7 +52,7 @@ class Recommendation:
         num_recommendations,
         max_walk_length=MAX_WALK_LENGTH,
         max_num_steps=MAX_NUM_STEPS,
-    ) -> Dict[str, float]:
+    ) -> Dict[int, float]:
         """
         Random-walk recommendation algorithm to return relevant cases given a case ID. Heavily based on
         Eksombatchai et. al (2018)'s Pixie recommendation algorithm for Pinterest.
@@ -79,7 +79,7 @@ class Recommendation:
             num_steps += walk_length
         return top_n(node_freq_dict, num_recommendations)
 
-    def input_node_weights(self, opinion_ids) -> Dict[str, float]:
+    def input_node_weights(self, opinion_ids) -> Dict[int, float]:
         """
         Given a set of IDs in a query, give the probability distribution with which to visit them based on
         their degree centralities.

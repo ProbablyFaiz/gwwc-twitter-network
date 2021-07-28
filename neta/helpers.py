@@ -17,9 +17,9 @@ class UserHelper:
 
         :param users: (optional) dataframe containing user data
         """
-        from constants import USERS_FILE_PATH
+        from neta.constants import USERS_FILE_PATH
 
-        if users is not None:
+        if users is None:
             users = pd.read_csv(USERS_FILE_PATH)
         self.users = users.set_index("id")
 
@@ -32,7 +32,7 @@ class UserHelper:
         return users[["username", "value"]].to_string()
 
 
-def top_n(value_dict: dict, n: int) -> Dict[str, float]:
+def top_n(value_dict: dict, n: int) -> Dict[int, float]:
 
     """Helper function to find the n highest-value keys in a dictionary.
     Runs in O(n+k) time for a dictionary with k entries."""
