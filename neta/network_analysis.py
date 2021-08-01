@@ -3,7 +3,7 @@ from typing import Dict, Set
 import networkx as nx
 
 from neta.graph import NetworkContainer
-from neta.helpers import UserHelper
+from neta.helpers import UserHelper, top_n
 from neta.recommendations import Recommendation
 
 GWWC_NODES = {
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     )
     network = network_container.network
     recommendation_engine = Recommendation(network_container)
-    # most_central = top_n(centrality(network), 25)
+    most_central = top_n(centrality(network), 25)
     # print("Most Central Users")
     # print(user_helper.pretty_print(most_central))
     most_aligned = recommendation_engine.recommendations(GWWC_NODES, 100)

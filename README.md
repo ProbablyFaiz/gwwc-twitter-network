@@ -26,6 +26,9 @@ Then, you need to install this package by running:
 
 `pip install -e .`
 
+If you want to analyze an existing network interactively, you also need to `pip install
+ipython`.
+
 #### Network graph files
 Copy the `users_following25.csv` and `edges_following25.csv` files from the GWWC drive
 into the `data/` folder. If you want to use followers data, copy the files into that
@@ -90,6 +93,28 @@ python neta/analyze_user.py excellentrandom --n 500 --use-recommender
 
 #### 2. Analyze network in IPython
 
+1. In the console, navigate to this folder and type `ipython` to open up the interactive
+python console.
+2. Run `%run neta/repl.py` to load all necessary components
+
+Now you can run the following commands:
+
+```python
+# Number of results to request
+n = 25
+# For network centrality
+most_central = top_n(centrality(network), n)
+
+# For Jaccard alignment
+most_aligned = top_n(gwwc_alignment_fast(network), n)
+
+# To query an ID that is in the network for connector nodes
+query_account = 14717311  # @elonmusk
+conn_nodes = top_n(connector_nodes(network, query_account), n)
+    
+# To use the recommendation approach, starting from GWWC seed nodes
+most_recommended = recommendation_engine.recommendations(GWWC_NODES, n)
+```
 
 ## Scraping
 
