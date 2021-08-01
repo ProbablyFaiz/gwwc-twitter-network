@@ -2,7 +2,6 @@ import logging
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import typer
 
@@ -10,11 +9,7 @@ from neta import scrape
 from neta.constants import EDGE_CSV_PATH, USERS_FILE_PATH
 from neta.graph import NetworkContainer
 from neta.helpers import UserHelper, top_n
-from neta.network_analysis import (
-    GWWC_NODES,
-    connector_nodes,
-    gwwc_alignment_fast,
-)
+from neta.network_analysis import GWWC_NODES, connector_nodes, gwwc_alignment_fast
 from neta.recommendations import Recommendation
 
 app = typer.Typer()
@@ -24,17 +19,25 @@ def analyze_user(
     lookup: str = typer.Argument(..., help="Twitter ID or handle to analyze"),
     method: str = typer.Option(
         "following",
-        help="Analyze 'following' or 'followers' (needs to match constants.py)",
+        help="Analyze 'following' or 'followers' (needs to match files constants.py)",
     ),
-    undirected: bool = typer.Option(
-        False, "--undirected", help="Use an undirected graph."
-    ),
-    n: int = typer.Option(25, help="No. of results to return, ie. 25 recommendations"),
+    n: int = typer.Option(50, help="No. of results to return, ie. 50 recommendations"),
     use_recommender: bool = typer.Option(
         False, "--use-recommender", help="Pass to use recommender method."
     ),
-    logfile: str = typer.Option("./analyze.log", help="Directory to save logs in."),
+    undirected: bool = typer.Option(
+        False, "--undirected", help="Use an undirected graph. (not recommended)"
+    ),
+    out_dir: Path = typer.Option(
+        Path("./results"),
+        help="Directory to save csv output to. Uses lookup username as filename (ie. results/givingwhatwecan.csv).",
+    ),
+    logfile: str = typer.Option(
+        "./analyze.log", help="File to save logs to (full path)."
+    ),
 ):
+    out_dir.mkdir(exist_ok=True, parents=True)
+    Path(logfile).parent.mkdir(exist_ok=True, parents=True)
     logging.basicConfig(
         filename=logfile,
         level=logging.INFO,
@@ -63,7 +66,7 @@ def analyze_user(
     source = "follower" if method == "following" else "followed"
     target = "followed" if method == "following" else "follower"
 
-    if user["id"] in edges[source]:
+    if user["id"] in edges[source].to_numpy():
         logging.info(f"User {user} already in dataset - starting analysis.")
     else:
         if user["id"] not in users["id"].to_numpy():
@@ -84,21 +87,29 @@ def analyze_user(
         )
 
     if use_recommender:
-        analyze_recommend(user["id"], network_container, n, user_helper)
+        analyze_recommend(user["id"], network_container, n, user_helper, out_dir)
     else:
-        analyze(user["id"], network_container, n, user_helper)
+        analyze(user["id"], network_container, n, user_helper, out_dir)
+
+    network_container.cache()
 
 
-def analyze(id, network_container, n, user_helper):
+def analyze(id, network_container, n, user_helper, out_dir):
     conn_nodes = top_n(connector_nodes(network_container.network, id), n)
-    print(user_helper.pretty_print_users(conn_nodes))
+    user_helper.users_with_values(conn_nodes).to_csv(
+        out_dir / f"{user_helper.get_username(id)}.csv"
+    )
+    print(user_helper.pretty_print(conn_nodes))
 
 
-def analyze_recommend(id, network_container, n, user_helper):
+def analyze_recommend(id, network_container, n, user_helper, out_dir):
     recommendation_engine = Recommendation(network_container)
     most_aligned = recommendation_engine.recommendations(GWWC_NODES, n)
     most_aligned = top_n(gwwc_alignment_fast(), n)
-    print(user_helper.pretty_print_users(most_aligned))
+    user_helper.users_with_values(most_aligned).to_csv(
+        out_dir / f"{user_helper.get_username(id)}.csv"
+    )
+    print(user_helper.pretty_print(most_aligned))
 
 
 def get_follows(user_id, method, users, edges, filter_metric_above=5000):
@@ -184,5 +195,4 @@ def lookup_user(user: str, id=False):
 
 
 if __name__ == "__main__":
-    # app()
     typer.run(analyze_user)

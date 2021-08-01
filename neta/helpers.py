@@ -1,7 +1,7 @@
 import heapq
 from collections import OrderedDict
 from math import inf
-from typing import Dict, Iterable, Sequence, Union
+from typing import Dict
 
 import pandas as pd
 
@@ -23,12 +23,16 @@ class UserHelper:
             users = pd.read_csv(USERS_FILE_PATH)
         self.users = users.set_index("id")
 
-    def get_usernames(self, user_ids: Iterable[int]):
-        return self.users.reindex(user_ids)["username"].to_list()
-
-    def pretty_print_users(self, user_value_dict: Dict[int, float]) -> str:
+    def users_with_values(self, user_value_dict: Dict[int, float]):
         users = self.users.reindex(user_value_dict)
         users["value"] = pd.Series(user_value_dict)
+        return users
+
+    def get_username(self, id):
+        return self.users.loc[id, "username"]
+
+    def pretty_print(self, user_value_dict: Dict[int, float]) -> str:
+        users = self.users_with_values(user_value_dict)
         return users[["username", "value"]].to_string()
 
 

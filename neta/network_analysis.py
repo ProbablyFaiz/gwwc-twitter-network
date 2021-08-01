@@ -1,11 +1,9 @@
-import csv
 from typing import Dict, Set
 
 import networkx as nx
 
-from neta.constants import EDGE_CSV_PATH
 from neta.graph import NetworkContainer
-from neta.helpers import UserHelper, top_n
+from neta.helpers import UserHelper
 from neta.recommendations import Recommendation
 
 GWWC_NODES = {
@@ -124,16 +122,18 @@ def connector_nodes(network, other_node: int) -> Dict[int, float]:
 
 if __name__ == "__main__":
     user_helper = UserHelper()
-    network_container = NetworkContainer.get_network(directed=False)
+    network_container = NetworkContainer.get_network(
+        directed=False, enable_caching=False
+    )
     network = network_container.network
     recommendation_engine = Recommendation(network_container)
     # most_central = top_n(centrality(network), 25)
     # print("Most Central Users")
-    # print(user_helper.pretty_print_users(most_central))
-    most_aligned = recommendation_engine.recommendations(GWWC_NODES, 25)
+    # print(user_helper.pretty_print(most_central))
+    most_aligned = recommendation_engine.recommendations(GWWC_NODES, 100)
     # most_aligned = top_n(gwwc_alignment_fast(network), 25)
     print("Most GWWC-Aligned Users")
-    print(user_helper.pretty_print_users(most_aligned))
+    print(user_helper.pretty_print(most_aligned))
     # comparison_acct = 14717311  # @elonmusk
     # conn_nodes = top_n(connector_nodes(network, comparison_acct), 25)
-    # print(user_helper.pretty_print_users(conn_nodes))
+    # print(user_helper.pretty_print(conn_nodes))

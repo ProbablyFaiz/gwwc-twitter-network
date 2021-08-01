@@ -14,7 +14,9 @@ import psycopg2
 import requests
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path="../.env")
+from neta.constants import PROJECT_DIR
+
+load_dotenv(dotenv_path=(PROJECT_DIR / ".env"))
 dbname = os.environ.get("DBNAME")
 user = os.environ.get("DBUSER")
 password = os.environ.get("DBPW")
@@ -198,7 +200,7 @@ def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000, wait=Tru
         )
         logging.exception(e)
         return -1
-    logging.info(f"Request {url}: {response.status_code} (waited {time_to_wait}s)")
+    logging.info(f"Request {url}: {response.status_code} (waited {time_to_wait:.2f}s)")
     return response.json()
 
 

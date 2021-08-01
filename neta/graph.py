@@ -19,7 +19,7 @@ class NodeMetadata(NamedTuple):
 class NetworkEdgeList:
     """
     An alternative representation of a network that is optimized for random sampling of
-    neighbors
+    neighbors.
     """
 
     edge_list: np.array
@@ -56,12 +56,19 @@ class NetworkEdgeList:
 class NetworkContainer:
     network: nx.Graph
     network_edge_list: NetworkEdgeList
+    version: str
 
     def __init__(self, directed=False, version="following", edges=None):
         if edges is None:
             edges = pd.read_csv(EDGE_CSV_PATH)
         self.network = self.construct_network(edges, directed, version)
         self.network_edge_list = NetworkEdgeList(edges, directed, version)
+        self.version = version
+
+    def cache(self):
+        print("Caching network.")
+        with open(NETWORK_CACHE_PATH.format(self.version), "wb") as cache_file:
+            pickle.dump(self, cache_file)
 
     @staticmethod
     def get_network(
@@ -69,14 +76,14 @@ class NetworkContainer:
         directed=True,
         version="following",
         edges=None,
+        rebuild_nel=False,
     ):
-        cache_file_path = NETWORK_CACHE_PATH
 
         if not enable_caching:
             return NetworkContainer(directed, version, edges)
-        if os.path.exists(cache_file_path):
+        if os.path.exists(NETWORK_CACHE_PATH.format(version)):
             try:
-                with open(cache_file_path, "rb") as cache_file:
+                with open(NETWORK_CACHE_PATH.format(version), "rb") as cache_file:
                     print("Loading network from cache.")
                     network_container = pickle.load(cache_file)
                     if directed and not network_container.network.is_directed():
@@ -87,19 +94,21 @@ class NetworkContainer:
                         network_container.network = (
                             network_container.network.to_undirected()
                         )
+                    # Rebuilding the NEL should be done only if it was originally
+                    # written as directed, and is then used for the recommender method
+                    if rebuild_nel:
+                        network_container.network_edge_list = NetworkEdgeList(
+                            edges, directed, version
+                        )
                     return network_container
             except BaseException as err:
                 print("Loading network from cache file failed with error:", err)
-                return NetworkContainer(
-                    directed, version, edges
-                )  # Create a new network if fetching from cache fails
-        else:  # Otherwise, construct a new network and cache it.
+                # Create a new network if fetching from cache fails
+                return NetworkContainer(directed, version, edges)
+        else:
+            # Otherwise, construct a new network and cache it.
             new_network = NetworkContainer(directed, version, edges)
-            try:
-                with open(cache_file_path, "wb") as cache_file:
-                    pickle.dump(new_network, cache_file)
-            except BaseException as err:
-                print("Saving network to cache file failed with error:", err)
+            new_network.cache()
             return new_network
 
     @staticmethod
