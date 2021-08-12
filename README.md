@@ -114,6 +114,9 @@ conn_nodes = top_n(connector_nodes(network, query_account), n)
     
 # To use the recommendation approach, starting from GWWC seed nodes
 most_recommended = recommendation_engine.recommendations(GWWC_NODES, n)
+
+# To print out the results, use this (most_xxx as the input):
+print(user_helper.pretty_print(most_recommended))
 ```
 
 ## Scraping

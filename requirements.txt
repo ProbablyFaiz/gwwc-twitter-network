@@ -1,7 +1,8 @@
 pandas
 numpy
 networkx
-psycopg2
+psycopg2-binary
 requests
 python-dotenv
 typer
+ipython
