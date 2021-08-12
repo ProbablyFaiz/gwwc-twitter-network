@@ -119,6 +119,16 @@ most_recommended = recommendation_engine.recommendations(GWWC_NODES, n)
 print(user_helper.pretty_print(most_recommended))
 ```
 
+#### Looking up user IDs
+
+
+If you know the handle of someone you'd like to identify in the network, you can look up their ID as such:
+
+```python
+lookup = "elonmusk"
+user_helper.get_id(lookup) # 14717311
+```
+
 ## Scraping
 
 ### Requirements

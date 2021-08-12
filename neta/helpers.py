@@ -31,6 +31,14 @@ class UserHelper:
     def get_username(self, id):
         return self.users.loc[id, "username"]
 
+    def get_id(self, name):
+        ids = self.users[self.users.username == name].index
+        if len(ids) == 0:
+            print(f"ID of user {name} not found (probably not in network).")
+            return -1
+        else:
+            return ids[0]
+
     def pretty_print(self, user_value_dict: Dict[int, float]) -> str:
         users = self.users_with_values(user_value_dict)
         return users[["username", "value"]].to_string()
