@@ -14,7 +14,9 @@ import psycopg2
 import requests
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path="../.env")
+from neta.constants import PROJECT_DIR
+
+load_dotenv(dotenv_path=(PROJECT_DIR / ".env"))
 dbname = os.environ.get("DBNAME")
 user = os.environ.get("DBUSER")
 password = os.environ.get("DBPW")
@@ -159,7 +161,7 @@ def url_user_lookup(users, by="id"):
     return url
 
 
-def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000):
+def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000, wait=True):
     """Connect to twitter API and return JSON response.  Spreads
 
     :param url: API URL
@@ -173,8 +175,10 @@ def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000):
     # Hack to spread out requests over the window - always request every TPR seconds
     t = time.time()
     time_to_wait = tpr - (t - last_request)
-    if time_to_wait > 0:
+    if wait and (time_to_wait > 0):
         time.sleep(time_to_wait)
+    else:
+        time_to_wait = 0
     last_request = time.time()
 
     response = requests.request(
@@ -196,7 +200,7 @@ def connect_to_endpoint(url, next_token=None, tpr=60, max_results=1000):
         )
         logging.exception(e)
         return -1
-    logging.info(f"Request {url}: {response.status_code} (waited {time_to_wait}s)")
+    logging.info(f"Request {url}: {response.status_code} (waited {time_to_wait:.2f}s)")
     return response.json()
 
 
@@ -271,7 +275,7 @@ def lookup_initial_ids(conn, users, id=False):
 
 
 def main(
-    users: List[int],
+    users: List[str],
     topn: int = 15,
     n_degrees: int = 6,
     method: str = "following",
