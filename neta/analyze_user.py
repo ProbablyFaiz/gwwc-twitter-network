@@ -6,6 +6,7 @@ import pandas as pd
 import typer
 
 from neta import scrape
+from neta.connectors import get_connector_paths
 from neta.constants import EDGE_CSV_PATH, USERS_FILE_PATH
 from neta.graph import NetworkContainer
 from neta.helpers import UserHelper, top_n
@@ -95,11 +96,13 @@ def analyze_user(
 
 
 def analyze(id, network_container, n, user_helper, out_dir):
-    conn_nodes = top_n(connector_nodes(network_container.network, id), n)
-    user_helper.users_with_values(conn_nodes).to_csv(
-        out_dir / f"{user_helper.get_username(id)}.csv"
-    )
-    print(user_helper.pretty_print(conn_nodes))
+    conn_paths = get_connector_paths(network_container.network_edge_list, GWWC_NODES, id, n)
+    # user_helper.users_with_values(conn_nodes).to_csv(
+    #     out_dir / f"{user_helper.get_username(id)}.csv"
+    # )
+    for path in conn_paths:
+        usernames = [user_helper.get_username(path_uid) for path_uid in path]
+        print(f"{' FOLLOWS '.join(usernames)}")
 
 
 def analyze_recommend(id, network_container, n, user_helper, out_dir):

@@ -6,7 +6,7 @@ from neta.graph import NetworkContainer
 from neta.helpers import UserHelper, top_n
 from neta.recommendations import Recommendation
 
-GWWC_NODES = {
+GWWC_NODES = frozenset({
     88534421,
     363005534,
     1062005076204642305,
@@ -21,7 +21,7 @@ GWWC_NODES = {
     37723353,
     1110877798820777986,
     181328570,
-}
+})
 
 
 def centrality(network) -> Dict[int, float]:
