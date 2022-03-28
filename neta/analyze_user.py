@@ -102,7 +102,7 @@ def analyze(id, network_container, n, user_helper, out_dir):
     # )
     for path in conn_paths:
         usernames = [user_helper.get_username(path_uid) for path_uid in path]
-        print(f"{' FOLLOWS '.join(usernames)}")
+        print(f"{' IS FOLLOWED BY '.join(usernames)}")
 
 
 def analyze_recommend(id, network_container, n, user_helper, out_dir):
